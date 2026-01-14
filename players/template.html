@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player Profile</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#0b0f19;color:#e9eefc}
+    .wrap{max-width:860px;margin:0 auto;padding:18px}
+    .top{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+    .card{background:#0f1730;border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:14px;margin-top:12px}
+    h1{margin:0;font-size:22px}
+    .muted{color:rgba(233,238,252,.72);font-size:13px}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+    a{color:#9cc3ff;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .tag{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);margin-right:6px;margin-top:8px}
+    iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
+    code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <a href="../index.html">← Back to board</a>
+        <h1>PLAYER NAME</h1>
+        <div class="muted">Class of 20XX • Position • City, State</div>
+      </div>
+      <div class="muted">Last updated: YYYY-MM-DD</div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div><b>Height:</b> 6'0</div>
+        <div><b>Weight:</b> 170</div>
+        <div><b>Wingspan (opt):</b> —</div>
+        <div><b>Team:</b> School / AAU</div>
+      </div>
+      <div style="margin-top:10px;">
+        <span class="tag">Two-way</span>
+        <span class="tag">High motor</span>
+        <span class="tag">Coach-able</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <b>Quick Summary</b>
+      <div class="muted" style="margin-top:6px;">
+        2–3 sentences: play style, strengths, and what role you fit (ex: primary ball-handler, 3&D wing, rim protector).
+      </div>
+    </div>
+
+    <div class="card">
+      <b>Film</b>
+      <div class="muted" style="margin-top:6px;">Paste a YouTube embed (preferred). Keep highlights 3–5 minutes.</div>
+      <div style="margin-top:10px;">
+        <!-- Replace VIDEO_ID -->
+        <iframe src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe>
+      </div>
+      <div class="muted" style="margin-top:8px;">
+        Hudl/Alt link: <a href="#" target="_blank" rel="noopener">https://...</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <b>Stats (optional)</b>
+      <div class="row" style="margin-top:10px;">
+        <div><b>PPG:</b> —</div>
+        <div><b>RPG:</b> —</div>
+        <div><b>APG:</b> —</div>
+        <div><b>FG% (opt):</b> —</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <b>Academics</b>
+      <div class="row" style="margin-top:10px;">
+        <div><b>GPA:</b> —</div>
+        <div><b>Grad Year:</b> 20XX</div>
+        <div><b>Test Scores (opt):</b> —</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <b>Contact</b>
+      <div class="muted" style="margin-top:6px;">Put real info only if you’re comfortable.</div>
+      <div class="row" style="margin-top:10px;">
+        <div><b>Player Email:</b> <a href="mailto:player@email.com">player@email.com</a></div>
+        <div><b>Parent/Guardian:</b> Name • <a href="tel:+1XXXXXXXXXX">+1 (XXX) XXX-XXXX</a></div>
+        <div><b>Coach (opt):</b> Name • <a href="mailto:coach@email.com">coach@email.com</a></div>
+      </div>
+    </div>
+
+    <div class="muted" style="margin-top:14px;">
+      Tip: Duplicate this file for each player and update <code>index.html</code> to add them to the board.
+    </div>
+  </div>
+</body>
+</html>
