@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recruiting Board (MVP)</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#0b0f19;color:#e9eefc}
+    header{padding:24px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)}
+    h1{margin:0;font-size:20px}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px}
+    select,input{background:#111a2e;border:1px solid rgba(255,255,255,.12);color:#e9eefc;border-radius:10px;padding:10px 12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    .card{background:#0f1730;border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:14px}
+    .tag{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);margin-right:6px;margin-top:8px}
+    a{color:#9cc3ff;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .muted{color:rgba(233,238,252,.72);font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Recruiting Board (MVP)</h1>
+      <div class="muted">Filter by class year & position. Click a player to view film + contact.</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="filters">
+      <input id="q" placeholder="Search name/city/team…" />
+      <select id="classYear">
+        <option value="all">All Classes</option>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+        <option value="2028">2028</option>
+      </select>
+      <select id="position">
+        <option value="all">All Positions</option>
+        <option value="G">Guard (G)</option>
+        <option value="W">Wing (W)</option>
+        <option value="F">Forward (F)</option>
+        <option value="C">Center (C)</option>
+      </select>
+    </div>
+
+    <div id="grid" class="grid"></div>
+    <div class="muted" style="margin-top:14px;">
+      Want to add a player? Duplicate <code>players/template.html</code> → update fields → add to the list in <code>index.html</code>.
+    </div>
+  </div>
+
+  <script>
+    // Add players here (MVP = manual list, no backend)
+    const players = [
+      {
+        name: "Kobby Sambrew",
+        classYear: "2027",
+        position: "G",
+        height: "6'1",
+        city: "Lakeville, MN",
+        team: "Varsity / AAU (optional)",
+        page: "players/kobby-sambrew.html",
+        tags: ["Athletic", "Two-way", "High motor"]
+      },
+      // Add more players like this:
+      // { name:"...", classYear:"2026", position:"F", height:"6'6", city:"...", team:"...", page:"players/....html", tags:["..."] },
+    ];
+
+    const grid = document.getElementById("grid");
+    const q = document.getElementById("q");
+    const classYear = document.getElementById("classYear");
+    const position = document.getElementById("position");
+
+    function render() {
+      const query = q.value.trim().toLowerCase();
+      const cy = classYear.value;
+      const pos = position.value;
+
+      const filtered = players.filter(p => {
+        const matchesQuery = !query || (
+          (p.name + " " + p.city + " " + p.team).toLowerCase().includes(query)
+        );
+        const matchesClass = (cy === "all") || p.classYear === cy;
+        const matchesPos = (pos === "all") || p.position === pos;
+        return matchesQuery && matchesClass && matchesPos;
+      });
+
+      grid.innerHTML = filtered.map(p => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;gap:10px;">
+            <div>
+              <div style="font-weight:700;font-size:16px;">${p.name}</div>
+              <div class="muted">Class of ${p.classYear} • ${p.position} • ${p.height}</div>
+              <div class="muted">${p.city} • ${p.team}</div>
+            </div>
+            <div style="text-align:right;">
+              <a href="${p.page}">View Profile →</a>
+            </div>
+          </div>
+          <div>
+            ${p.tags.map(t => `<span class="tag">${t}</span>`).join("")}
+          </div>
+        </div>
+      `).join("");
+
+      if (!filtered.length) {
+        grid.innerHTML = `<div class="muted">No players match those filters.</div>`;
+      }
+    }
+
+    [q, classYear, position].forEach(el => el.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>
