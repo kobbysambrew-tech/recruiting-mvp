@@ -1,117 +1,2313 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!--
+    Recruiting Board MVP (Static) — GitHub + Vercel friendly
+    - Single file: index.html
+    - No backend required
+    - “Filters” are client-side (JS)
+    - Shareable URLs with query params
+    - Saved list (shortlist) stored in localStorage
+    - Import/Export JSON for your player dataset
+    - Mobile-first + coach-friendly scanning UX
+
+    HOW TO USE
+    1) Drop this file into your repo as index.html
+    2) Deploy on Vercel (Framework: Other)
+    3) Edit the PLAYERS array near the bottom to add players
+    4) Each player can have a profile link (optional) or a film link is enough for MVP
+  -->
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recruiting Board (MVP)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b0f19" />
+  <title>Recruiting Board — MVP</title>
+
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#0b0f19;color:#e9eefc}
-    header{padding:24px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)}
-    h1{margin:0;font-size:20px}
-    .wrap{max-width:980px;margin:0 auto;padding:16px}
-    .filters{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px}
-    select,input{background:#111a2e;border:1px solid rgba(255,255,255,.12);color:#e9eefc;border-radius:10px;padding:10px 12px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-    .card{background:#0f1730;border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:14px}
-    .tag{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);margin-right:6px;margin-top:8px}
-    a{color:#9cc3ff;text-decoration:none}
+    /* ==========================
+       THEME
+    ========================== */
+    :root{
+      --bg0:#070a12;
+      --bg1:#0b1020;
+      --bg2:#0f1730;
+      --card:#0d1430cc;
+      --card2:#101a3a;
+      --text:#eaf1ff;
+      --muted:rgba(234,241,255,.72);
+      --muted2:rgba(234,241,255,.55);
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.14);
+      --shadow: 0 12px 28px rgba(0,0,0,.35);
+      --shadow2: 0 10px 22px rgba(0,0,0,.25);
+      --accent:#70b7ff;   /* electric blue */
+      --accent2:#9b7bff;  /* violet */
+      --good:#5dffb0;
+      --warn:#ffd36f;
+      --bad:#ff6b6b;
+      --pill:rgba(255,255,255,.08);
+      --pill2:rgba(255,255,255,.10);
+      --focus:rgba(112,183,255,.35);
+
+      --radius:18px;
+      --radius2:14px;
+      --radius3:12px;
+      --pad:16px;
+      --pad2:12px;
+      --pad3:10px;
+
+      --mono: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      --sans: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -20%, rgba(112,183,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(155,123,255,.22), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(93,255,176,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 35%, var(--bg2));
+      overflow-x:hidden;
+    }
+
+    a{color:var(--accent); text-decoration:none}
     a:hover{text-decoration:underline}
-    .muted{color:rgba(233,238,252,.72);font-size:13px}
+    button, input, select, textarea{font-family:inherit}
+    ::selection{background:rgba(112,183,255,.25)}
+    .wrap{max-width:1200px; margin:0 auto; padding:18px}
+    .muted{color:var(--muted)}
+    .muted2{color:var(--muted2)}
+    .mono{font-family:var(--mono)}
+    .hide{display:none !important}
+    .sr-only{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+
+    /* ==========================
+       HEADER
+    ========================== */
+    header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(7,10,18,.85), rgba(7,10,18,.55));
+      border-bottom:1px solid var(--line);
+    }
+
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 18px;
+    }
+
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      min-width:260px;
+    }
+
+    .logo{
+      width:40px;height:40px;border-radius:14px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(112,183,255,.9), rgba(112,183,255,.25) 55%, transparent 70%),
+        radial-gradient(circle at 75% 40%, rgba(155,123,255,.9), rgba(155,123,255,.15) 50%, transparent 70%),
+        linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+      box-shadow: var(--shadow2);
+      border:1px solid rgba(255,255,255,.14);
+    }
+
+    .brand h1{
+      font-size:16px;
+      margin:0;
+      line-height:1.1;
+      letter-spacing:.2px;
+    }
+    .brand .sub{
+      font-size:12px;
+      margin-top:3px;
+      color:var(--muted);
+    }
+
+    .header-actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      font-size:12px;
+      color:var(--muted);
+      user-select:none;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:var(--text);
+      cursor:pointer;
+      transition:transform .06s ease, border-color .15s ease, background .15s ease;
+      user-select:none;
+      font-weight:600;
+      font-size:13px;
+    }
+    .btn:hover{border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.08)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      background:linear-gradient(135deg, rgba(112,183,255,.22), rgba(155,123,255,.18));
+      border-color:rgba(112,183,255,.35);
+    }
+    .btn.danger{
+      background:rgba(255,107,107,.08);
+      border-color:rgba(255,107,107,.22);
+    }
+    .btn.good{
+      background:rgba(93,255,176,.08);
+      border-color:rgba(93,255,176,.22);
+    }
+    .btn.icon{
+      padding:10px 10px;
+      width:40px;
+      justify-content:center;
+    }
+
+    .kpi{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+      padding:0 18px 14px;
+    }
+
+    .kpi .stat{
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      min-width:150px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.20);
+    }
+    .kpi .stat .label{font-size:11px;color:var(--muted); margin-bottom:2px}
+    .kpi .stat .value{font-size:16px;font-weight:800; letter-spacing:.2px}
+    .kpi .stat .hint{font-size:11px;color:var(--muted2); margin-top:3px}
+
+    /* ==========================
+       LAYOUT GRID
+    ========================== */
+    .layout{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:16px;
+      align-items:start;
+      margin-top:16px;
+    }
+
+    @media (max-width: 1000px){
+      .layout{grid-template-columns:1fr}
+      .brand{min-width:unset}
+    }
+
+    /* ==========================
+       FILTER PANEL
+    ========================== */
+    .panel{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2{
+      margin:0 0 10px 0;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+
+    .fields{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .field{display:flex; flex-direction:column; gap:6px}
+    .field label{
+      font-size:11px;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .field label .small{
+      font-size:10px;
+      color:var(--muted2);
+    }
+
+    input[type="text"], input[type="number"], select{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(8,12,22,.6);
+      color:var(--text);
+      outline:none;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus{
+      border-color:rgba(112,183,255,.35);
+      box-shadow:0 0 0 4px var(--focus);
+    }
+    select{cursor:pointer}
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .seg{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .seg button{
+      border-radius:999px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      font-weight:700;
+      font-size:12px;
+      cursor:pointer;
+    }
+    .seg button.active{
+      color:var(--text);
+      border-color:rgba(112,183,255,.35);
+      background:rgba(112,183,255,.14);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:var(--pill);
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+    }
+
+    .panel .hr{
+      height:1px;
+      background:var(--line);
+      margin:12px 0;
+    }
+
+    /* ==========================
+       RESULTS AREA
+    ========================== */
+    .results{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .toolbar-left, .toolbar-right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:12px;
+    }
+    @media (max-width: 1200px){
+      .grid{grid-template-columns: repeat(2, minmax(0, 1fr))}
+    }
+    @media (max-width: 680px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(16,26,58,.92), rgba(10,14,28,.88));
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow: var(--shadow2);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(260px 200px at 20% 0%, rgba(112,183,255,.22), transparent 60%),
+        radial-gradient(240px 240px at 90% 10%, rgba(155,123,255,.18), transparent 60%);
+      opacity:.7;
+      pointer-events:none;
+    }
+
+    .card > *{position:relative}
+
+    .cardhead{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+
+    .name{
+      font-weight:900;
+      font-size:16px;
+      margin:0;
+      letter-spacing:.2px;
+      line-height:1.1;
+    }
+
+    .meta{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 10px;
+      align-items:center;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.07);
+      border:1px solid var(--line);
+      font-size:11px;
+      color:var(--muted);
+      user-select:none;
+    }
+    .badge.good{border-color:rgba(93,255,176,.25); background:rgba(93,255,176,.10); color:rgba(234,241,255,.88)}
+    .badge.warn{border-color:rgba(255,211,111,.25); background:rgba(255,211,111,.10); color:rgba(234,241,255,.88)}
+    .badge.accent{border-color:rgba(112,183,255,.25); background:rgba(112,183,255,.10); color:rgba(234,241,255,.88)}
+
+    .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .tag{
+      font-size:11px;
+      padding:6px 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:var(--muted);
+    }
+
+    .card-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .mini-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .card-actions .btn{padding:8px 10px; border-radius:12px; font-size:12px}
+    .card-actions .btn.icon{width:36px; padding:8px 0}
+
+    .score{
+      font-weight:900;
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .bar{
+      width:86px;
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      overflow:hidden;
+    }
+    .bar > span{
+      display:block;
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(112,183,255,.9), rgba(155,123,255,.8));
+    }
+
+    /* ==========================
+       MODALS
+    ========================== */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.6);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:1000;
+    }
+    .modal{
+      width:min(920px, 100%);
+      border-radius:20px;
+      border:1px solid var(--line2);
+      background:linear-gradient(180deg, rgba(16,26,58,.96), rgba(9,12,22,.92));
+      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal-head{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+    }
+    .modal-head .title{
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .modal-body{
+      padding:16px;
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:14px;
+    }
+    @media (max-width: 860px){
+      .modal-body{grid-template-columns:1fr}
+    }
+    .modal-section{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:rgba(255,255,255,.04);
+    }
+    .modal-section h3{
+      margin:0 0 10px 0;
+      font-size:13px;
+      color:rgba(234,241,255,.92);
+    }
+    .kv{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .kv b{color:rgba(234,241,255,.92)}
+    .iframe{
+      width:100%;
+      aspect-ratio: 16/9;
+      border:0;
+      border-radius:14px;
+      background:#000;
+    }
+    .modal-foot{
+      padding:14px 16px;
+      border-top:1px solid var(--line);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      background:rgba(255,255,255,.03);
+    }
+
+    /* ==========================
+       TOAST
+    ========================== */
+    .toast{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      z-index:2000;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      width:min(360px, calc(100% - 36px));
+    }
+    .toast .t{
+      border:1px solid var(--line);
+      background:rgba(16,26,58,.92);
+      border-radius:14px;
+      padding:12px;
+      box-shadow: var(--shadow);
+      color:rgba(234,241,255,.92);
+      font-size:13px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+    .toast .t .x{cursor:pointer; color:var(--muted); font-weight:900}
+
+    /* ==========================
+       FOOTER
+    ========================== */
+    footer{
+      margin:24px 0 50px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+
+    /* small helpers */
+    .kbd{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:rgba(234,241,255,.86);
+    }
   </style>
 </head>
+
 <body>
-  <header>
-    <div class="wrap">
-      <h1>Recruiting Board (MVP)</h1>
-      <div class="muted">Filter by class year & position. Click a player to view film + contact.</div>
-    </div>
-  </header>
-
-  <div class="wrap">
-    <div class="filters">
-      <input id="q" placeholder="Search name/city/team…" />
-      <select id="classYear">
-        <option value="all">All Classes</option>
-        <option value="2026">2026</option>
-        <option value="2027">2027</option>
-        <option value="2028">2028</option>
-      </select>
-      <select id="position">
-        <option value="all">All Positions</option>
-        <option value="G">Guard (G)</option>
-        <option value="W">Wing (W)</option>
-        <option value="F">Forward (F)</option>
-        <option value="C">Center (C)</option>
-      </select>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Recruiting Board <span class="muted2">— MVP</span></h1>
+        <div class="sub">Static filters • Shareable searches • Shortlist • Coach-friendly scan</div>
+      </div>
     </div>
 
-    <div id="grid" class="grid"></div>
-    <div class="muted" style="margin-top:14px;">
-      Want to add a player? Duplicate <code>players/template.html</code> → update fields → add to the list in <code>index.html</code>.
+    <div class="header-actions">
+      <span class="chip" id="chipCount">0 players</span>
+      <span class="chip" id="chipFiltered">0 shown</span>
+      <span class="chip" id="chipShortlist">Shortlist: 0</span>
+
+      <button class="btn primary" id="btnShare" title="Copy share link">
+        🔗 Share Search
+      </button>
+
+      <button class="btn" id="btnShortlistToggle" title="Show only shortlisted players">
+        ⭐ Shortlist View
+      </button>
+
+      <button class="btn" id="btnImport" title="Import players JSON (paste)">
+        ⬆️ Import JSON
+      </button>
+
+      <button class="btn" id="btnExport" title="Export current dataset JSON">
+        ⬇️ Export JSON
+      </button>
+
+      <button class="btn icon" id="btnHelp" title="Help / Tips">?</button>
     </div>
   </div>
 
-  <script>
-    // Add players here (MVP = manual list, no backend)
-    const players = [
-      {
-        name: "Kobby Sambrew",
-        classYear: "2027",
-        position: "G",
-        height: "6'1",
-        city: "Lakeville, MN",
-        team: "Varsity / AAU (optional)",
-        page: "players/kobby-sambrew.html",
-        tags: ["Athletic", "Two-way", "High motor"]
-      },
-      // Add more players like this:
-      // { name:"...", classYear:"2026", position:"F", height:"6'6", city:"...", team:"...", page:"players/....html", tags:["..."] },
-    ];
+  <div class="kpi">
+    <div class="stat">
+      <div class="label">Search Tip</div>
+      <div class="value">Fast Filter</div>
+      <div class="hint">Try: <span class="kbd">position=G</span> + <span class="kbd">height ≥ 6'2</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Coach View</div>
+      <div class="value">Scan → Film</div>
+      <div class="hint">Click a card → quick profile modal</div>
+    </div>
+    <div class="stat">
+      <div class="label">No Backend</div>
+      <div class="value">Vercel Ready</div>
+      <div class="hint">Edit the <span class="mono">PLAYERS</span> array</div>
+    </div>
+  </div>
+</header>
 
-    const grid = document.getElementById("grid");
-    const q = document.getElementById("q");
-    const classYear = document.getElementById("classYear");
-    const position = document.getElementById("position");
+<main class="wrap">
+  <div class="layout">
+    <!-- FILTER PANEL -->
+    <aside class="panel" aria-label="Filters">
+      <h2>Filters</h2>
 
-    function render() {
-      const query = q.value.trim().toLowerCase();
-      const cy = classYear.value;
-      const pos = position.value;
+      <div class="fields">
+        <div class="field" style="grid-column:1/-1">
+          <label for="q">Search <span class="small">name, city, school, team, tags</span></label>
+          <input id="q" type="text" placeholder="e.g., 'Minneapolis guard', 'AAU', 'rim protector'…" />
+        </div>
 
-      const filtered = players.filter(p => {
-        const matchesQuery = !query || (
-          (p.name + " " + p.city + " " + p.team).toLowerCase().includes(query)
-        );
-        const matchesClass = (cy === "all") || p.classYear === cy;
-        const matchesPos = (pos === "all") || p.position === pos;
-        return matchesQuery && matchesClass && matchesPos;
-      });
+        <div class="field">
+          <label for="classYear">Class Year</label>
+          <select id="classYear">
+            <option value="all">All</option>
+          </select>
+        </div>
 
-      grid.innerHTML = filtered.map(p => `
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;gap:10px;">
-            <div>
-              <div style="font-weight:700;font-size:16px;">${p.name}</div>
-              <div class="muted">Class of ${p.classYear} • ${p.position} • ${p.height}</div>
-              <div class="muted">${p.city} • ${p.team}</div>
-            </div>
-            <div style="text-align:right;">
-              <a href="${p.page}">View Profile →</a>
-            </div>
+        <div class="field">
+          <label for="position">Position</label>
+          <select id="position">
+            <option value="all">All</option>
+            <option value="PG">PG</option>
+            <option value="SG">SG</option>
+            <option value="SF">SF</option>
+            <option value="PF">PF</option>
+            <option value="C">C</option>
+            <option value="G">G (Any Guard)</option>
+            <option value="W">W (Wing)</option>
+            <option value="F">F (Forward)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="state">State</label>
+          <select id="state">
+            <option value="all">All</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="region">Region</label>
+          <select id="region">
+            <option value="all">All</option>
+            <option value="Midwest">Midwest</option>
+            <option value="South">South</option>
+            <option value="West">West</option>
+            <option value="Northeast">Northeast</option>
+            <option value="International">International</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="heightMin">Height Min <span class="small">(inches)</span></label>
+          <input id="heightMin" type="number" min="0" step="1" placeholder="e.g., 74 (6'2)" />
+        </div>
+
+        <div class="field">
+          <label for="heightMax">Height Max <span class="small">(inches)</span></label>
+          <input id="heightMax" type="number" min="0" step="1" placeholder="e.g., 80 (6'8)" />
+        </div>
+
+        <div class="field">
+          <label for="weightMin">Weight Min <span class="small">(lbs)</span></label>
+          <input id="weightMin" type="number" min="0" step="1" placeholder="e.g., 180" />
+        </div>
+
+        <div class="field">
+          <label for="weightMax">Weight Max <span class="small">(lbs)</span></label>
+          <input id="weightMax" type="number" min="0" step="1" placeholder="e.g., 230" />
+        </div>
+
+        <div class="field">
+          <label for="gpaMin">GPA Min</label>
+          <input id="gpaMin" type="number" min="0" max="4.0" step="0.1" placeholder="e.g., 3.0" />
+        </div>
+
+        <div class="field">
+          <label for="satMin">SAT Min <span class="small">(optional)</span></label>
+          <input id="satMin" type="number" min="0" step="10" placeholder="e.g., 1100" />
+        </div>
+
+        <div class="field">
+          <label for="offerLevel">Target Level</label>
+          <select id="offerLevel">
+            <option value="all">All</option>
+            <option value="D1">D1</option>
+            <option value="D2">D2</option>
+            <option value="D3">D3</option>
+            <option value="NAIA">NAIA</option>
+            <option value="JUCO">JUCO</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="handedness">Hand</label>
+          <select id="handedness">
+            <option value="all">All</option>
+            <option value="Right">Right</option>
+            <option value="Left">Left</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+
+        <div class="field" style="grid-column:1/-1">
+          <label for="tagsAny">Must include tags <span class="small">(comma separated)</span></label>
+          <input id="tagsAny" type="text" placeholder="e.g., 3-and-D, rim protector, high motor" />
+        </div>
+
+        <div class="field" style="grid-column:1/-1">
+          <label for="availability">Availability</label>
+          <select id="availability">
+            <option value="all">All</option>
+            <option value="Open">Open to talk</option>
+            <option value="Committed">Committed</option>
+            <option value="Unsigned">Unsigned</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="field">
+        <label>Quick toggles</label>
+        <div class="seg" role="group" aria-label="Quick toggles">
+          <button type="button" data-toggle="hasFilm" class="active" title="Show only players with film link">Has Film</button>
+          <button type="button" data-toggle="hasContact" class="active" title="Show only players with contact info">Has Contact</button>
+          <button type="button" data-toggle="showCommitted" title="Include committed players">Include Committed</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="btn good" id="btnApply">
+          ✅ Apply Filters
+        </button>
+        <button class="btn" id="btnReset">
+          ♻️ Reset
+        </button>
+        <button class="btn" id="btnRandom">
+          🎲 Random Player
+        </button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="field">
+        <label>Search Health</label>
+        <div class="pill" id="healthPill">Ready</div>
+      </div>
+
+      <div class="field">
+        <label>Shareable URL</label>
+        <div class="pill mono" id="urlPill" style="width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          (click “Share Search”)
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="muted" style="font-size:12px; line-height:1.55;">
+        <b>Tip:</b> Height inputs are inches. Quick conversions:
+        <span class="mono">72=6'0</span>,
+        <span class="mono">74=6'2</span>,
+        <span class="mono">76=6'4</span>,
+        <span class="mono">78=6'6</span>,
+        <span class="mono">80=6'8</span>
+      </div>
+    </aside>
+
+    <!-- RESULTS -->
+    <section class="results" aria-label="Results">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span class="pill" id="resultsSummary">Showing 0</span>
+          <span class="pill" id="activeFiltersPill">Filters: none</span>
+        </div>
+
+        <div class="toolbar-right">
+          <div class="field" style="min-width:210px">
+            <label for="sortBy" class="sr-only">Sort By</label>
+            <select id="sortBy" title="Sort results">
+              <option value="score_desc">Sort: Match Score (desc)</option>
+              <option value="height_desc">Sort: Height (desc)</option>
+              <option value="height_asc">Sort: Height (asc)</option>
+              <option value="gpa_desc">Sort: GPA (desc)</option>
+              <option value="class_asc">Sort: Class Year (asc)</option>
+              <option value="name_asc">Sort: Name (A-Z)</option>
+              <option value="recent_desc">Sort: Updated (recent)</option>
+            </select>
           </div>
-          <div>
-            ${p.tags.map(t => `<span class="tag">${t}</span>`).join("")}
+
+          <div class="field" style="min-width:140px">
+            <label for="perPage" class="sr-only">Per page</label>
+            <select id="perPage" title="Players per page">
+              <option value="12">12 / page</option>
+              <option value="24">24 / page</option>
+              <option value="48">48 / page</option>
+              <option value="9999">All</option>
+            </select>
+          </div>
+
+          <button class="btn" id="btnPrev">← Prev</button>
+          <button class="btn" id="btnNext">Next →</button>
+        </div>
+      </div>
+
+      <div class="grid" id="grid" aria-live="polite"></div>
+
+      <footer>
+        Built as a static MVP (GitHub + Vercel). No accounts. No backend. Edit the dataset to grow.
+      </footer>
+    </section>
+  </div>
+</main>
+
+<!-- PLAYER MODAL -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-label="Player profile">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="title" id="modalTitle">Player</div>
+        <div class="muted" id="modalSub">—</div>
+      </div>
+      <button class="btn icon" id="modalClose" aria-label="Close">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-section">
+        <h3>Film</h3>
+        <iframe class="iframe" id="modalFilm" src="" allowfullscreen></iframe>
+        <div class="row" style="margin-top:10px;">
+          <a class="btn" id="modalFilmLink" href="#" target="_blank" rel="noopener">🎥 Open Film Link</a>
+          <a class="btn" id="modalProfileLink" href="#" target="_blank" rel="noopener">🔗 Open Profile</a>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h3>Details</h3>
+        <div class="kv" id="modalKV"></div>
+
+        <div class="hr" style="margin:12px 0;"></div>
+
+        <h3>Contact</h3>
+        <div class="muted" id="modalContact"></div>
+
+        <div class="hr" style="margin:12px 0;"></div>
+
+        <h3>Tags</h3>
+        <div class="tags" id="modalTags"></div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <div class="muted" id="modalUpdated">Updated: —</div>
+      <div class="row" style="margin:0">
+        <button class="btn" id="modalShortlist">⭐ Add to Shortlist</button>
+        <button class="btn" id="modalCopy">📋 Copy Summary</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIMPLE PASTE MODAL (IMPORT/EXPORT/HELP) -->
+<div class="modal-backdrop" id="pasteBackdrop" role="dialog" aria-modal="true" aria-label="Paste dialog">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-head">
+      <div>
+        <div class="title" id="pasteTitle">Dialog</div>
+        <div class="muted" id="pasteSub">—</div>
+      </div>
+      <button class="btn icon" id="pasteClose" aria-label="Close">✕</button>
+    </div>
+
+    <div class="modal-body" style="grid-template-columns:1fr">
+      <div class="modal-section">
+        <h3 id="pasteH3">Paste</h3>
+        <textarea id="pasteArea" style="
+          width:100%; min-height:320px; resize:vertical;
+          padding:12px; border-radius:14px;
+          background:rgba(8,12,22,.7);
+          border:1px solid var(--line);
+          color:var(--text);
+          outline:none;
+          font-family:var(--mono);
+          font-size:12px;
+          line-height:1.45;"></textarea>
+        <div class="row" style="justify-content:space-between;">
+          <div class="muted" id="pasteHint">—</div>
+          <div class="row" style="margin:0">
+            <button class="btn" id="pasteAction">Do</button>
+            <button class="btn" id="pasteCancel">Cancel</button>
           </div>
         </div>
-      `).join("");
+      </div>
+    </div>
 
-      if (!filtered.length) {
-        grid.innerHTML = `<div class="muted">No players match those filters.</div>`;
-      }
+    <div class="modal-foot">
+      <div class="muted" id="pasteFootLeft">Tip: Keep film links public.</div>
+      <div class="muted" id="pasteFootRight"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   UTILITIES
+========================================================= */
+const $ = (id) => document.getElementById(id);
+
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+function toInt(x){
+  const n = parseInt(String(x||"").trim(), 10);
+  return Number.isFinite(n) ? n : null;
+}
+function toFloat(x){
+  const n = parseFloat(String(x||"").trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function toast(msg){
+  const box = $("toast");
+  const el = document.createElement("div");
+  el.className = "t";
+  el.innerHTML = `<div>${escapeHtml(msg)}</div><div class="x" title="Close">✕</div>`;
+  el.querySelector(".x").onclick = () => el.remove();
+  box.appendChild(el);
+  setTimeout(()=>{ if(el.isConnected) el.remove(); }, 4200);
+}
+
+function copyText(text){
+  navigator.clipboard?.writeText(text).then(
+    ()=>toast("Copied to clipboard"),
+    ()=>toast("Copy failed — you can manually copy it.")
+  );
+}
+
+function normalize(s){ return String(s||"").toLowerCase().trim(); }
+
+function uniq(arr){
+  return [...new Set(arr.filter(Boolean))];
+}
+
+function formatHeight(inches){
+  const n = toInt(inches);
+  if(!n) return "—";
+  const ft = Math.floor(n/12);
+  const inch = n % 12;
+  return `${ft}'${inch}"`;
+}
+
+function parseYouTubeEmbed(url){
+  // Accepts:
+  // - https://www.youtube.com/watch?v=VIDEO
+  // - https://youtu.be/VIDEO
+  // - https://www.youtube.com/embed/VIDEO
+  // returns embed url or null
+  const u = String(url||"").trim();
+  if(!u) return null;
+  try{
+    const x = new URL(u);
+    if(x.hostname.includes("youtu.be")){
+      const id = x.pathname.replace("/","");
+      return id ? `https://www.youtube.com/embed/${id}` : null;
     }
+    if(x.hostname.includes("youtube.com")){
+      if(x.pathname.includes("/embed/")){
+        return u;
+      }
+      const id = x.searchParams.get("v");
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    return null;
+  }catch(e){
+    return null;
+  }
+}
 
-    [q, classYear, position].forEach(el => el.addEventListener("input", render));
-    render();
-  </script>
+function nowISO(){
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function safeUrl(u){
+  const s = String(u||"").trim();
+  if(!s) return "";
+  if(s.startsWith("http://") || s.startsWith("https://")) return s;
+  return "";
+}
+
+/* =========================================================
+   SHORTLIST STORAGE
+========================================================= */
+const SHORTLIST_KEY = "recruiting_shortlist_v1";
+function getShortlist(){
+  try{
+    const raw = localStorage.getItem(SHORTLIST_KEY);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+function setShortlist(ids){
+  localStorage.setItem(SHORTLIST_KEY, JSON.stringify(uniq(ids)));
+  updateHeaderChips();
+}
+function toggleShortlist(id){
+  const ids = getShortlist();
+  const idx = ids.indexOf(id);
+  if(idx >= 0){
+    ids.splice(idx,1);
+    setShortlist(ids);
+    toast("Removed from shortlist");
+    return false;
+  }else{
+    ids.push(id);
+    setShortlist(ids);
+    toast("Added to shortlist");
+    return true;
+  }
+}
+function inShortlist(id){
+  return getShortlist().includes(id);
+}
+
+/* =========================================================
+   QUERY PARAMS (SHARE SEARCH)
+========================================================= */
+function getParams(){
+  const p = new URLSearchParams(location.search);
+  const obj = {};
+  for(const [k,v] of p.entries()) obj[k]=v;
+  return obj;
+}
+function setParams(obj){
+  const p = new URLSearchParams();
+  Object.entries(obj).forEach(([k,v])=>{
+    if(v === null || v === undefined) return;
+    const s = String(v).trim();
+    if(!s) return;
+    p.set(k,s);
+  });
+  const qs = p.toString();
+  const url = qs ? `${location.pathname}?${qs}` : location.pathname;
+  history.replaceState(null, "", url);
+  return url;
+}
+
+/* =========================================================
+   DATA SCHEMA (MVP)
+   id: unique string
+   name, classYear, positions[] (ex: ["PG","SG"])
+   heightIn, weightLb
+   city, state, region
+   school, aau
+   gpa, sat
+   handedness
+   targetLevel (D1/D2/D3/NAIA/JUCO)
+   availability (Open/Committed/Unsigned)
+   filmUrl (YouTube preferred), altFilmUrl (Hudl etc)
+   profileUrl (optional)
+   tags[]
+   updatedAt (YYYY-MM-DD)
+   contact: { playerEmail, parentPhone, parentName, coachEmail, coachName }
+========================================================= */
+
+/* =========================================================
+   SAMPLE DATA — Replace with your own
+========================================================= */
+let PLAYERS = [
+  {
+    id: "kobby-sambrew-2027-g",
+    name: "Kobby Sambrew",
+    classYear: 2027,
+    positions: ["PG","SG"],
+    heightIn: 73,
+    weightLb: 175,
+    city: "Lakeville",
+    state: "MN",
+    region: "Midwest",
+    school: "High School (optional)",
+    aau: "AAU Team (optional)",
+    gpa: 3.2,
+    sat: null,
+    handedness: "Right",
+    targetLevel: "D2",
+    availability: "Open",
+    filmUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    altFilmUrl: "",
+    profileUrl: "",
+    tags: ["Two-way", "High motor", "Coach-able", "On-ball defense"],
+    updatedAt: nowISO(),
+    contact: {
+      playerEmail: "player@email.com",
+      parentName: "Parent Name",
+      parentPhone: "+1 (000) 000-0000",
+      coachName: "",
+      coachEmail: ""
+    }
+  },
+  {
+    id: "alex-johnson-2026-w",
+    name: "Alex Johnson",
+    classYear: 2026,
+    positions: ["SF","SG"],
+    heightIn: 77,
+    weightLb: 205,
+    city: "Minneapolis",
+    state: "MN",
+    region: "Midwest",
+    school: "Example HS",
+    aau: "Example AAU",
+    gpa: 3.6,
+    sat: 1180,
+    handedness: "Left",
+    targetLevel: "D1",
+    availability: "Unsigned",
+    filmUrl: "https://youtu.be/dQw4w9WgXcQ",
+    altFilmUrl: "",
+    profileUrl: "",
+    tags: ["3-and-D", "Length", "Transition finisher", "Rebounds"],
+    updatedAt: "2026-01-10",
+    contact: {
+      playerEmail: "alex@email.com",
+      parentName: "J. Johnson",
+      parentPhone: "+1 (000) 000-0000",
+      coachName: "Coach Smith",
+      coachEmail: "coach@email.com"
+    }
+  },
+  {
+    id: "mason-lee-2028-c",
+    name: "Mason Lee",
+    classYear: 2028,
+    positions: ["C","PF"],
+    heightIn: 80,
+    weightLb: 235,
+    city: "Madison",
+    state: "WI",
+    region: "Midwest",
+    school: "Example HS",
+    aau: "",
+    gpa: 2.9,
+    sat: null,
+    handedness: "Both",
+    targetLevel: "D2",
+    availability: "Committed",
+    filmUrl: "",
+    altFilmUrl: "",
+    profileUrl: "",
+    tags: ["Rim protector", "Screens", "Paint touch", "Physical"],
+    updatedAt: "2025-12-22",
+    contact: {
+      playerEmail: "",
+      parentName: "",
+      parentPhone: "",
+      coachName: "",
+      coachEmail: ""
+    }
+  }
+];
+
+/* =========================================================
+   APP STATE
+========================================================= */
+const state = {
+  page: 1,
+  perPage: 12,
+  shortlistOnly: false,
+  toggles: {
+    hasFilm: true,
+    hasContact: true,
+    showCommitted: false
+  },
+  currentModalId: null
+};
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+const el = {
+  q: $("q"),
+  classYear: $("classYear"),
+  position: $("position"),
+  stateSel: $("state"),
+  region: $("region"),
+  heightMin: $("heightMin"),
+  heightMax: $("heightMax"),
+  weightMin: $("weightMin"),
+  weightMax: $("weightMax"),
+  gpaMin: $("gpaMin"),
+  satMin: $("satMin"),
+  offerLevel: $("offerLevel"),
+  handedness: $("handedness"),
+  tagsAny: $("tagsAny"),
+  availability: $("availability"),
+
+  btnApply: $("btnApply"),
+  btnReset: $("btnReset"),
+  btnRandom: $("btnRandom"),
+
+  sortBy: $("sortBy"),
+  perPage: $("perPage"),
+  btnPrev: $("btnPrev"),
+  btnNext: $("btnNext"),
+
+  grid: $("grid"),
+
+  chipCount: $("chipCount"),
+  chipFiltered: $("chipFiltered"),
+  chipShortlist: $("chipShortlist"),
+
+  resultsSummary: $("resultsSummary"),
+  activeFiltersPill: $("activeFiltersPill"),
+  healthPill: $("healthPill"),
+  urlPill: $("urlPill"),
+
+  btnShare: $("btnShare"),
+  btnShortlistToggle: $("btnShortlistToggle"),
+  btnImport: $("btnImport"),
+  btnExport: $("btnExport"),
+  btnHelp: $("btnHelp"),
+
+  modalBackdrop: $("modalBackdrop"),
+  modalClose: $("modalClose"),
+  modalTitle: $("modalTitle"),
+  modalSub: $("modalSub"),
+  modalFilm: $("modalFilm"),
+  modalFilmLink: $("modalFilmLink"),
+  modalProfileLink: $("modalProfileLink"),
+  modalKV: $("modalKV"),
+  modalContact: $("modalContact"),
+  modalTags: $("modalTags"),
+  modalUpdated: $("modalUpdated"),
+  modalShortlist: $("modalShortlist"),
+  modalCopy: $("modalCopy"),
+
+  pasteBackdrop: $("pasteBackdrop"),
+  pasteClose: $("pasteClose"),
+  pasteTitle: $("pasteTitle"),
+  pasteSub: $("pasteSub"),
+  pasteH3: $("pasteH3"),
+  pasteArea: $("pasteArea"),
+  pasteHint: $("pasteHint"),
+  pasteAction: $("pasteAction"),
+  pasteCancel: $("pasteCancel"),
+  pasteFootLeft: $("pasteFootLeft"),
+  pasteFootRight: $("pasteFootRight")
+};
+
+/* =========================================================
+   POPULATE SELECTS (class year, states)
+========================================================= */
+function populateSelects(){
+  // class years from dataset
+  const years = uniq(PLAYERS.map(p => p.classYear).filter(Boolean)).sort((a,b)=>a-b);
+  el.classYear.innerHTML = `<option value="all">All</option>` + years.map(y=>`<option value="${y}">${y}</option>`).join("");
+
+  // states from dataset
+  const states = uniq(PLAYERS.map(p => p.state).filter(Boolean)).sort();
+  el.stateSel.innerHTML = `<option value="all">All</option>` + states.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+}
+
+function updateHeaderChips(filteredCount){
+  el.chipCount.textContent = `${PLAYERS.length} players`;
+  if(typeof filteredCount === "number") el.chipFiltered.textContent = `${filteredCount} shown`;
+  el.chipShortlist.textContent = `Shortlist: ${getShortlist().length}`;
+}
+
+/* =========================================================
+   FILTER HELPERS
+========================================================= */
+function normalizePositions(p){
+  // store standardized positions and meta groups
+  const pos = (p.positions || []).map(x => String(x).toUpperCase().trim());
+  const set = new Set(pos);
+
+  // group mapping
+  const isGuard = set.has("PG") || set.has("SG") || set.has("G");
+  const isWing  = set.has("SF") || set.has("W");
+  const isFwd   = set.has("PF") || set.has("F");
+  const isC     = set.has("C");
+
+  // also treat SG/SF as wingish, PF/SF as forwardish
+  if(set.has("SG")) set.add("G");
+  if(set.has("PG")) set.add("G");
+  if(set.has("SF")) set.add("W");
+  if(set.has("SG")) set.add("W"); // often recruiters group SG/SF together
+  if(set.has("PF")) set.add("F");
+  if(set.has("SF")) set.add("F"); // SF can be forward too
+  if(set.has("C"))  set.add("C");
+
+  return { set, isGuard, isWing, isFwd, isC };
+}
+
+function hasAnyTag(player, wantedTags){
+  if(!wantedTags.length) return true;
+  const tags = (player.tags || []).map(t => normalize(t));
+  return wantedTags.every(w => tags.includes(normalize(w)));
+}
+
+function hasContact(player){
+  const c = player.contact || {};
+  const has = Boolean((c.playerEmail && String(c.playerEmail).includes("@")) || (c.parentPhone && String(c.parentPhone).trim().length>6) || (c.coachEmail && String(c.coachEmail).includes("@")));
+  return has;
+}
+
+function hasFilm(player){
+  const f = safeUrl(player.filmUrl) || safeUrl(player.altFilmUrl);
+  return Boolean(f);
+}
+
+function matchesText(player, query){
+  if(!query) return true;
+  const blob = [
+    player.name, player.city, player.state, player.region,
+    player.school, player.aau,
+    (player.tags || []).join(" "),
+    (player.positions || []).join(" "),
+    player.targetLevel, player.availability
+  ].filter(Boolean).join(" ").toLowerCase();
+  return blob.includes(query);
+}
+
+function computeMatchScore(player, filters){
+  // 0..100-ish
+  let score = 50;
+
+  // position match boosts
+  if(filters.position && filters.position !== "all"){
+    const pos = normalizePositions(player);
+    const want = filters.position;
+    if(pos.set.has(want)) score += 18;
+    else score -= 10;
+  }
+
+  // class year preference
+  if(filters.classYear && filters.classYear !== "all"){
+    const y = toInt(filters.classYear);
+    if(player.classYear === y) score += 12;
+    else score -= 6;
+  }
+
+  // height within range
+  const h = toInt(player.heightIn);
+  if(h){
+    if(filters.heightMin != null && h >= filters.heightMin) score += 7;
+    if(filters.heightMin != null && h <  filters.heightMin) score -= 9;
+    if(filters.heightMax != null && h <= filters.heightMax) score += 5;
+    if(filters.heightMax != null && h >  filters.heightMax) score -= 7;
+  }
+
+  // gpa
+  const gpa = toFloat(player.gpa);
+  if(filters.gpaMin != null){
+    if(gpa != null && gpa >= filters.gpaMin) score += 6;
+    else score -= 6;
+  }
+
+  // region/state match
+  if(filters.state && filters.state !== "all"){
+    if(String(player.state).toUpperCase() === String(filters.state).toUpperCase()) score += 5;
+    else score -= 2;
+  }
+  if(filters.region && filters.region !== "all"){
+    if(String(player.region) === String(filters.region)) score += 4;
+    else score -= 2;
+  }
+
+  // target level
+  if(filters.offerLevel && filters.offerLevel !== "all"){
+    if(String(player.targetLevel) === String(filters.offerLevel)) score += 4;
+    else score -= 2;
+  }
+
+  // availability
+  if(filters.availability && filters.availability !== "all"){
+    if(String(player.availability) === String(filters.availability)) score += 4;
+    else score -= 2;
+  }
+
+  // film/contact
+  if(hasFilm(player)) score += 8; else score -= 8;
+  if(hasContact(player)) score += 6; else score -= 4;
+
+  return clamp(score, 0, 100);
+}
+
+function buildActiveFiltersText(filters){
+  const parts = [];
+  if(filters.q) parts.push(`q="${filters.q}"`);
+  if(filters.classYear !== "all") parts.push(`class=${filters.classYear}`);
+  if(filters.position !== "all") parts.push(`pos=${filters.position}`);
+  if(filters.state !== "all") parts.push(`state=${filters.state}`);
+  if(filters.region !== "all") parts.push(`region=${filters.region}`);
+  if(filters.heightMin != null) parts.push(`h≥${filters.heightMin}`);
+  if(filters.heightMax != null) parts.push(`h≤${filters.heightMax}`);
+  if(filters.weightMin != null) parts.push(`w≥${filters.weightMin}`);
+  if(filters.weightMax != null) parts.push(`w≤${filters.weightMax}`);
+  if(filters.gpaMin != null) parts.push(`gpa≥${filters.gpaMin}`);
+  if(filters.satMin != null) parts.push(`sat≥${filters.satMin}`);
+  if(filters.offerLevel !== "all") parts.push(`level=${filters.offerLevel}`);
+  if(filters.handedness !== "all") parts.push(`hand=${filters.handedness}`);
+  if(filters.availability !== "all") parts.push(`avail=${filters.availability}`);
+  if(filters.tagsAny.length) parts.push(`tags=${filters.tagsAny.join(",")}`);
+
+  if(state.toggles.hasFilm) parts.push("hasFilm");
+  if(state.toggles.hasContact) parts.push("hasContact");
+  if(state.toggles.showCommitted) parts.push("inclCommitted");
+
+  if(state.shortlistOnly) parts.push("shortlistOnly");
+
+  return parts.length ? parts.join(" • ") : "none";
+}
+
+/* =========================================================
+   GET FILTERS FROM UI
+========================================================= */
+function readFiltersFromUI(){
+  const filters = {
+    q: normalize(el.q.value),
+    classYear: el.classYear.value,
+    position: el.position.value,
+    state: el.stateSel.value,
+    region: el.region.value,
+    heightMin: toInt(el.heightMin.value),
+    heightMax: toInt(el.heightMax.value),
+    weightMin: toInt(el.weightMin.value),
+    weightMax: toInt(el.weightMax.value),
+    gpaMin: toFloat(el.gpaMin.value),
+    satMin: toInt(el.satMin.value),
+    offerLevel: el.offerLevel.value,
+    handedness: el.handedness.value,
+    availability: el.availability.value,
+    tagsAny: el.tagsAny.value.split(",").map(s=>s.trim()).filter(Boolean)
+  };
+
+  // clean invalid ranges
+  if(filters.heightMin != null && filters.heightMax != null && filters.heightMin > filters.heightMax){
+    const tmp = filters.heightMin; filters.heightMin = filters.heightMax; filters.heightMax = tmp;
+  }
+  if(filters.weightMin != null && filters.weightMax != null && filters.weightMin > filters.weightMax){
+    const tmp = filters.weightMin; filters.weightMin = filters.weightMax; filters.weightMax = tmp;
+  }
+  return filters;
+}
+
+/* =========================================================
+   APPLY FILTERS (CORE)
+========================================================= */
+function applyFilters(){
+  const filters = readFiltersFromUI();
+  const shortlistIds = getShortlist();
+
+  let list = PLAYERS.slice();
+
+  // shortlist-only
+  if(state.shortlistOnly){
+    list = list.filter(p => shortlistIds.includes(p.id));
+  }
+
+  // toggles
+  if(state.toggles.hasFilm){
+    list = list.filter(p => hasFilm(p));
+  }
+  if(state.toggles.hasContact){
+    list = list.filter(p => hasContact(p));
+  }
+  if(!state.toggles.showCommitted){
+    list = list.filter(p => String(p.availability) !== "Committed");
+  }
+
+  // query
+  if(filters.q){
+    list = list.filter(p => matchesText(p, filters.q));
+  }
+
+  // classYear
+  if(filters.classYear !== "all"){
+    const y = toInt(filters.classYear);
+    list = list.filter(p => p.classYear === y);
+  }
+
+  // position
+  if(filters.position !== "all"){
+    const want = filters.position;
+    list = list.filter(p => normalizePositions(p).set.has(want));
+  }
+
+  // state & region
+  if(filters.state !== "all"){
+    list = list.filter(p => String(p.state).toUpperCase() === String(filters.state).toUpperCase());
+  }
+  if(filters.region !== "all"){
+    list = list.filter(p => String(p.region) === String(filters.region));
+  }
+
+  // height
+  if(filters.heightMin != null){
+    list = list.filter(p => (toInt(p.heightIn) || 0) >= filters.heightMin);
+  }
+  if(filters.heightMax != null){
+    list = list.filter(p => (toInt(p.heightIn) || 999) <= filters.heightMax);
+  }
+
+  // weight
+  if(filters.weightMin != null){
+    list = list.filter(p => (toInt(p.weightLb) || 0) >= filters.weightMin);
+  }
+  if(filters.weightMax != null){
+    list = list.filter(p => (toInt(p.weightLb) || 999) <= filters.weightMax);
+  }
+
+  // gpa
+  if(filters.gpaMin != null){
+    list = list.filter(p => (toFloat(p.gpa) || 0) >= filters.gpaMin);
+  }
+
+  // sat
+  if(filters.satMin != null){
+    list = list.filter(p => (toInt(p.sat) || 0) >= filters.satMin);
+  }
+
+  // level
+  if(filters.offerLevel !== "all"){
+    list = list.filter(p => String(p.targetLevel) === String(filters.offerLevel));
+  }
+
+  // hand
+  if(filters.handedness !== "all"){
+    list = list.filter(p => String(p.handedness) === String(filters.handedness));
+  }
+
+  // availability
+  if(filters.availability !== "all"){
+    list = list.filter(p => String(p.availability) === String(filters.availability));
+  }
+
+  // tags
+  if(filters.tagsAny.length){
+    list = list.filter(p => hasAnyTag(p, filters.tagsAny));
+  }
+
+  // compute score
+  list = list.map(p => ({...p, _score: computeMatchScore(p, filters)}));
+
+  // sort
+  list = sortList(list);
+
+  // update pills
+  el.activeFiltersPill.textContent = `Filters: ${buildActiveFiltersText(filters)}`;
+  el.resultsSummary.textContent = `Showing ${list.length}`;
+
+  // update share URL pill (based on current filters + toggles)
+  const shareUrl = buildShareUrl(filters);
+  el.urlPill.textContent = shareUrl;
+
+  // update health pill
+  updateHealth(filters, list.length);
+
+  // paginate + render
+  render(list);
+
+  // chips
+  updateHeaderChips(list.length);
+}
+
+function updateHealth(filters, count){
+  // Simple “health” logic: if too many filters are conflicting
+  let msg = "Ready";
+  if(count === 0){
+    msg = "No matches — loosen filters";
+  } else if(count < 5){
+    msg = "Narrow (good for targeting)";
+  } else if(count > 60){
+    msg = "Wide — add filters";
+  } else {
+    msg = "Healthy";
+  }
+  el.healthPill.textContent = msg;
+}
+
+function sortList(list){
+  const mode = el.sortBy.value;
+
+  const byName = (a,b)=> String(a.name).localeCompare(String(b.name));
+  const byUpdated = (a,b)=> String(b.updatedAt||"").localeCompare(String(a.updatedAt||""));
+
+  if(mode === "score_desc"){
+    return list.sort((a,b)=> (b._score||0)-(a._score||0) || byUpdated(a,b) || byName(a,b));
+  }
+  if(mode === "height_desc"){
+    return list.sort((a,b)=> (toInt(b.heightIn)||0)-(toInt(a.heightIn)||0) || (b._score||0)-(a._score||0));
+  }
+  if(mode === "height_asc"){
+    return list.sort((a,b)=> (toInt(a.heightIn)||0)-(toInt(b.heightIn)||0) || (b._score||0)-(a._score||0));
+  }
+  if(mode === "gpa_desc"){
+    return list.sort((a,b)=> (toFloat(b.gpa)||0)-(toFloat(a.gpa)||0) || (b._score||0)-(a._score||0));
+  }
+  if(mode === "class_asc"){
+    return list.sort((a,b)=> (toInt(a.classYear)||9999)-(toInt(b.classYear)||9999) || (b._score||0)-(a._score||0));
+  }
+  if(mode === "name_asc"){
+    return list.sort((a,b)=> byName(a,b));
+  }
+  if(mode === "recent_desc"){
+    return list.sort((a,b)=> byUpdated(a,b) || (b._score||0)-(a._score||0));
+  }
+  return list;
+}
+
+/* =========================================================
+   RENDER + PAGINATION
+========================================================= */
+function render(list){
+  const per = toInt(el.perPage.value) || 12;
+  state.perPage = per;
+
+  const total = list.length;
+
+  const maxPage = per >= 9999 ? 1 : Math.max(1, Math.ceil(total / per));
+  state.page = clamp(state.page, 1, maxPage);
+
+  const start = per >= 9999 ? 0 : (state.page - 1) * per;
+  const end   = per >= 9999 ? total : start + per;
+
+  const pageItems = list.slice(start, end);
+
+  el.btnPrev.disabled = (state.page <= 1);
+  el.btnNext.disabled = (state.page >= maxPage);
+
+  el.btnPrev.style.opacity = el.btnPrev.disabled ? .55 : 1;
+  el.btnNext.style.opacity = el.btnNext.disabled ? .55 : 1;
+
+  // build cards
+  el.grid.innerHTML = pageItems.map(p => cardHTML(p)).join("") || `
+    <div class="panel" style="grid-column:1/-1">
+      <h2>No results</h2>
+      <div class="muted">Try removing some filters, lowering GPA/height minimums, or enabling “Include Committed”.</div>
+    </div>
+  `;
+
+  // wire card actions
+  pageItems.forEach(p => wireCard(p));
+
+  // update chip with pagination info
+  const shown = pageItems.length;
+  el.chipFiltered.textContent = `${shown}/${total} shown`;
+}
+
+/* =========================================================
+   CARD HTML
+========================================================= */
+function badgeHTML(text, cls=""){
+  return `<span class="badge ${cls}">${escapeHtml(text)}</span>`;
+}
+
+function scoreBarHTML(score){
+  const s = clamp(toInt(score)||0, 0, 100);
+  return `
+    <div class="score">
+      <span>${s}</span>
+      <div class="bar"><span style="width:${s}%"></span></div>
+    </div>
+  `;
+}
+
+function cardHTML(p){
+  const pos = (p.positions || []).join("/");
+  const height = formatHeight(p.heightIn);
+  const weight = p.weightLb ? `${p.weightLb} lb` : "—";
+  const loc = [p.city, p.state].filter(Boolean).join(", ");
+  const film = safeUrl(p.filmUrl) || safeUrl(p.altFilmUrl);
+  const filmOk = Boolean(film);
+  const contactOk = hasContact(p);
+  const shortlist = inShortlist(p.id);
+
+  const topBadges = [
+    badgeHTML(`Class ${p.classYear}`, "accent"),
+    badgeHTML(pos || "—"),
+    badgeHTML(height),
+    p.gpa ? badgeHTML(`GPA ${p.gpa}`, "good") : badgeHTML("GPA —"),
+    filmOk ? badgeHTML("Film", "good") : badgeHTML("No Film", "warn"),
+    contactOk ? badgeHTML("Contact", "good") : badgeHTML("No Contact", "warn")
+  ].slice(0,6).join("");
+
+  const tags = (p.tags || []).slice(0,6).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join("");
+
+  const score = p._score ?? 0;
+
+  return `
+    <article class="card" id="card-${escapeHtml(p.id)}">
+      <div class="cardhead">
+        <div>
+          <h3 class="name">${escapeHtml(p.name)}</h3>
+          <div class="meta">
+            ${topBadges}
+          </div>
+          <div class="meta">
+            <span class="muted2">${escapeHtml(loc || "—")}</span>
+            <span class="muted2">•</span>
+            <span class="muted2">${escapeHtml(p.school || "School —")}</span>
+            ${p.aau ? `<span class="muted2">•</span><span class="muted2">${escapeHtml(p.aau)}</span>` : ``}
+          </div>
+        </div>
+        ${scoreBarHTML(score)}
+      </div>
+
+      <div class="tags">${tags || `<span class="muted2">No tags</span>`}</div>
+
+      <div class="card-actions">
+        <div class="mini-actions">
+          <button class="btn" data-open="${escapeHtml(p.id)}">👤 Quick View</button>
+          ${filmOk ? `<a class="btn" href="${escapeHtml(film)}" target="_blank" rel="noopener">🎥 Film</a>` : `<button class="btn" disabled style="opacity:.55">🎥 Film</button>`}
+          ${p.profileUrl ? `<a class="btn" href="${escapeHtml(p.profileUrl)}" target="_blank" rel="noopener">🔗 Profile</a>` : ``}
+        </div>
+        <div class="mini-actions">
+          <button class="btn icon ${shortlist ? "primary" : ""}" data-star="${escapeHtml(p.id)}" title="Shortlist">
+            ${shortlist ? "★" : "☆"}
+          </button>
+          <button class="btn icon" data-copy="${escapeHtml(p.id)}" title="Copy summary">⧉</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function wireCard(p){
+  const card = $("card-" + p.id);
+  if(!card) return;
+
+  const openBtn = card.querySelector(`[data-open="${CSS.escape(p.id)}"]`);
+  const starBtn = card.querySelector(`[data-star="${CSS.escape(p.id)}"]`);
+  const copyBtn = card.querySelector(`[data-copy="${CSS.escape(p.id)}"]`);
+
+  openBtn?.addEventListener("click", ()=> openModal(p.id));
+  starBtn?.addEventListener("click", ()=>{
+    toggleShortlist(p.id);
+    applyFilters(); // re-render so stars update
+  });
+  copyBtn?.addEventListener("click", ()=>{
+    copyText(buildPlayerSummary(p));
+  });
+}
+
+/* =========================================================
+   PLAYER SUMMARY
+========================================================= */
+function buildPlayerSummary(p){
+  const pos = (p.positions || []).join("/");
+  const loc = [p.city, p.state].filter(Boolean).join(", ");
+  const film = safeUrl(p.filmUrl) || safeUrl(p.altFilmUrl);
+  const lines = [
+    `${p.name} — Class ${p.classYear} — ${pos || "—"}`,
+    `Height: ${formatHeight(p.heightIn)} • Weight: ${p.weightLb || "—"} • Hand: ${p.handedness || "—"}`,
+    `Location: ${loc || "—"}`,
+    `School: ${p.school || "—"} • AAU: ${p.aau || "—"}`,
+    `GPA: ${p.gpa ?? "—"} • SAT: ${p.sat ?? "—"} • Level: ${p.targetLevel || "—"}`,
+    `Availability: ${p.availability || "—"}`,
+    `Film: ${film || "—"}`,
+    `Tags: ${(p.tags || []).join(", ") || "—"}`,
+    `Updated: ${p.updatedAt || "—"}`
+  ];
+  return lines.join("\n");
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+function openModal(id){
+  const p = PLAYERS.find(x => x.id === id);
+  if(!p) return;
+
+  state.currentModalId = id;
+
+  el.modalTitle.textContent = p.name;
+  const pos = (p.positions || []).join("/");
+  const loc = [p.city, p.state].filter(Boolean).join(", ");
+  el.modalSub.textContent = `Class ${p.classYear} • ${pos || "—"} • ${loc || "—"}`;
+
+  // film iframe
+  const film = safeUrl(p.filmUrl) || safeUrl(p.altFilmUrl);
+  const embed = parseYouTubeEmbed(film);
+  el.modalFilm.src = embed || "";
+  el.modalFilmLink.href = film || "#";
+  el.modalFilmLink.style.display = film ? "inline-flex" : "none";
+
+  // profile link
+  el.modalProfileLink.href = safeUrl(p.profileUrl) || "#";
+  el.modalProfileLink.style.display = p.profileUrl ? "inline-flex" : "none";
+
+  // kv
+  const kv = [
+    ["Class Year", p.classYear],
+    ["Positions", pos || "—"],
+    ["Height", formatHeight(p.heightIn)],
+    ["Weight", p.weightLb ? `${p.weightLb} lb` : "—"],
+    ["Hand", p.handedness || "—"],
+    ["Target Level", p.targetLevel || "—"],
+    ["Availability", p.availability || "—"],
+    ["GPA", p.gpa ?? "—"],
+    ["SAT", p.sat ?? "—"],
+    ["Region", p.region || "—"],
+    ["School", p.school || "—"],
+    ["AAU", p.aau || "—"]
+  ];
+  el.modalKV.innerHTML = kv.map(([k,v])=>`
+    <div><b>${escapeHtml(k)}:</b> ${escapeHtml(v ?? "—")}</div>
+  `).join("");
+
+  // contact
+  const c = p.contact || {};
+  const contactLines = [];
+  if(c.playerEmail) contactLines.push(`Player: ${c.playerEmail}`);
+  if(c.parentName || c.parentPhone) contactLines.push(`Parent: ${[c.parentName, c.parentPhone].filter(Boolean).join(" • ")}`);
+  if(c.coachName || c.coachEmail) contactLines.push(`Coach: ${[c.coachName, c.coachEmail].filter(Boolean).join(" • ")}`);
+  el.modalContact.textContent = contactLines.length ? contactLines.join(" | ") : "No contact info provided.";
+
+  // tags
+  el.modalTags.innerHTML = (p.tags || []).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join("") || `<span class="muted2">No tags</span>`;
+
+  // updated
+  el.modalUpdated.textContent = `Updated: ${p.updatedAt || "—"}`;
+
+  // shortlist button
+  const isStar = inShortlist(p.id);
+  el.modalShortlist.textContent = isStar ? "★ Remove from Shortlist" : "⭐ Add to Shortlist";
+
+  el.modalBackdrop.style.display = "flex";
+}
+
+function closeModal(){
+  el.modalBackdrop.style.display = "none";
+  el.modalFilm.src = ""; // stop playback
+  state.currentModalId = null;
+}
+
+/* =========================================================
+   SHARE URL BUILDING (filters -> query params)
+========================================================= */
+function buildShareUrl(filters){
+  const params = {
+    q: filters.q || "",
+    class: (filters.classYear !== "all") ? filters.classYear : "",
+    pos: (filters.position !== "all") ? filters.position : "",
+    state: (filters.state !== "all") ? filters.state : "",
+    region: (filters.region !== "all") ? filters.region : "",
+    hmin: filters.heightMin ?? "",
+    hmax: filters.heightMax ?? "",
+    wmin: filters.weightMin ?? "",
+    wmax: filters.weightMax ?? "",
+    gmin: filters.gpaMin ?? "",
+    sat: filters.satMin ?? "",
+    level: (filters.offerLevel !== "all") ? filters.offerLevel : "",
+    hand: (filters.handedness !== "all") ? filters.handedness : "",
+    avail: (filters.availability !== "all") ? filters.availability : "",
+    tags: filters.tagsAny.join(",") || "",
+    hasFilm: state.toggles.hasFilm ? "1" : "",
+    hasContact: state.toggles.hasContact ? "1" : "",
+    inclCommitted: state.toggles.showCommitted ? "1" : "",
+    shortlistOnly: state.shortlistOnly ? "1" : "",
+    sort: el.sortBy.value,
+    per: el.perPage.value,
+    page: String(state.page)
+  };
+  const url = setParams(params);
+  return location.origin + url;
+}
+
+function applyFromQueryParams(){
+  const p = getParams();
+
+  // basic fields
+  el.q.value = p.q || "";
+  if(p.class) el.classYear.value = p.class;
+  if(p.pos) el.position.value = p.pos;
+  if(p.state) el.stateSel.value = p.state;
+  if(p.region) el.region.value = p.region;
+
+  el.heightMin.value = p.hmin || "";
+  el.heightMax.value = p.hmax || "";
+  el.weightMin.value = p.wmin || "";
+  el.weightMax.value = p.wmax || "";
+  el.gpaMin.value = p.gmin || "";
+  el.satMin.value = p.sat || "";
+  if(p.level) el.offerLevel.value = p.level;
+  if(p.hand) el.handedness.value = p.hand;
+  if(p.avail) el.availability.value = p.avail;
+  el.tagsAny.value = p.tags || "";
+
+  // toggles
+  state.toggles.hasFilm = p.hasFilm === "1" ? true : (p.hasFilm === "0" ? false : state.toggles.hasFilm);
+  state.toggles.hasContact = p.hasContact === "1" ? true : (p.hasContact === "0" ? false : state.toggles.hasContact);
+  state.toggles.showCommitted = p.inclCommitted === "1";
+  state.shortlistOnly = p.shortlistOnly === "1";
+
+  // sort/per/page
+  if(p.sort) el.sortBy.value = p.sort;
+  if(p.per) el.perPage.value = p.per;
+  if(p.page) state.page = clamp(toInt(p.page) || 1, 1, 9999);
+
+  // update toggle buttons UI
+  document.querySelectorAll('[data-toggle]').forEach(btn=>{
+    const key = btn.getAttribute("data-toggle");
+    const on = Boolean(state.toggles[key]);
+    btn.classList.toggle("active", on);
+  });
+  // show committed toggle is inverse label: "Include Committed"
+  const showCommittedBtn = document.querySelector('[data-toggle="showCommitted"]');
+  showCommittedBtn?.classList.toggle("active", state.toggles.showCommitted);
+
+  // shortlist view button label
+  el.btnShortlistToggle.classList.toggle("primary", state.shortlistOnly);
+}
+
+/* =========================================================
+   IMPORT / EXPORT / HELP DIALOGS
+========================================================= */
+function openPasteDialog({title, sub, h3, hint, footLeft, footRight, value, actionText, onAction}){
+  el.pasteTitle.textContent = title;
+  el.pasteSub.textContent = sub || "";
+  el.pasteH3.textContent = h3 || "Paste";
+  el.pasteHint.textContent = hint || "";
+  el.pasteFootLeft.textContent = footLeft || "";
+  el.pasteFootRight.textContent = footRight || "";
+  el.pasteArea.value = value || "";
+  el.pasteAction.textContent = actionText || "OK";
+
+  el.pasteBackdrop.style.display = "flex";
+
+  const cleanup = ()=>{
+    el.pasteBackdrop.style.display = "none";
+    el.pasteAction.onclick = null;
+    el.pasteCancel.onclick = null;
+  };
+
+  el.pasteCancel.onclick = ()=> cleanup();
+  el.pasteClose.onclick = ()=> cleanup();
+
+  el.pasteAction.onclick = ()=>{
+    try{
+      onAction?.(el.pasteArea.value);
+    }catch(e){
+      toast("Action failed: " + (e?.message || e));
+    }finally{
+      cleanup();
+    }
+  };
+}
+
+function doExport(){
+  const json = JSON.stringify(PLAYERS, null, 2);
+  openPasteDialog({
+    title: "Export JSON",
+    sub: "Copy your current dataset. Paste it into a file later if you want.",
+    h3: "Players JSON",
+    hint: "This is your dataset. Keep it in GitHub for version control.",
+    footLeft: "Tip: Store this as data.json if you want later (optional).",
+    footRight: `Exported: ${nowISO()}`,
+    value: json,
+    actionText: "Copy JSON",
+    onAction: (txt)=> copyText(txt)
+  });
+}
+
+function doImport(){
+  openPasteDialog({
+    title: "Import JSON",
+    sub: "Paste an array of player objects here to replace the dataset.",
+    h3: "Paste Players JSON",
+    hint: "Must be valid JSON: [ {player}, {player} ]",
+    footLeft: "Tip: Make sure each player has a unique id.",
+    footRight: "",
+    value: "",
+    actionText: "Import",
+    onAction: (txt)=>{
+      const parsed = JSON.parse(txt);
+      if(!Array.isArray(parsed)) throw new Error("JSON must be an array of players.");
+      // basic validation
+      parsed.forEach((p,i)=>{
+        if(!p.id || !p.name) throw new Error(`Player at index ${i} missing id or name.`);
+      });
+      PLAYERS = parsed;
+      populateSelects();
+      applyFilters();
+      toast(`Imported ${PLAYERS.length} players`);
+    }
+  });
+}
+
+function doHelp(){
+  const helpText = `RECRUITING BOARD MVP (STATIC)
+
+WHAT THIS IS:
+- A coach-friendly board that filters players with no backend.
+- Shareable searches via URL params.
+- Shortlist stored in your browser (localStorage).
+
+ADDING PLAYERS:
+- Edit PLAYERS in index.html.
+- Each player needs:
+  id (unique), name, classYear, positions[], heightIn, weightLb (optional),
+  city/state/region, filmUrl (recommended), contact (optional), tags[].
+
+HEIGHT TIP:
+- heightIn is inches. 74 = 6'2", 76 = 6'4", 78 = 6'6".
+
+FILM:
+- YouTube links embed automatically in the modal.
+- Hudl links can be placed in altFilmUrl (opens as a link).
+
+SHORTLIST:
+- Click ☆ on a card or ⭐ in modal.
+- "Shortlist View" shows only saved players.
+
+SHARE SEARCH:
+- Set filters, click "Share Search" to copy a link.
+- Link includes: filters, toggles, page, and sorting.
+
+NEXT UPGRADE (when you want):
+- Add per-player pages (players/*.html) and set profileUrl.
+- Add a Google Form -> export -> import to update dataset quickly.
+`;
+  openPasteDialog({
+    title: "Help / Tips",
+    sub: "Everything you need to run this MVP.",
+    h3: "Guide",
+    hint: "You can copy this into a notes doc.",
+    footLeft: "MVP mindset: Ship now, iterate later.",
+    footRight: "",
+    value: helpText,
+    actionText: "Copy Guide",
+    onAction: (txt)=> copyText(txt)
+  });
+}
+
+/* =========================================================
+   EVENTS
+========================================================= */
+function wireEvents(){
+  // apply/reset
+  el.btnApply.onclick = ()=>{ state.page = 1; applyFilters(); };
+  el.btnReset.onclick = ()=>{
+    // reset UI
+    el.q.value = "";
+    el.classYear.value = "all";
+    el.position.value = "all";
+    el.stateSel.value = "all";
+    el.region.value = "all";
+    el.heightMin.value = "";
+    el.heightMax.value = "";
+    el.weightMin.value = "";
+    el.weightMax.value = "";
+    el.gpaMin.value = "";
+    el.satMin.value = "";
+    el.offerLevel.value = "all";
+    el.handedness.value = "all";
+    el.tagsAny.value = "";
+    el.availability.value = "all";
+
+    // reset toggles
+    state.toggles.hasFilm = true;
+    state.toggles.hasContact = true;
+    state.toggles.showCommitted = false;
+    state.shortlistOnly = false;
+    state.page = 1;
+
+    document.querySelectorAll('[data-toggle]').forEach(btn=>{
+      const key = btn.getAttribute("data-toggle");
+      const on = Boolean(state.toggles[key]);
+      btn.classList.toggle("active", on);
+    });
+    const showCommittedBtn = document.querySelector('[data-toggle="showCommitted"]');
+    showCommittedBtn?.classList.toggle("active", state.toggles.showCommitted);
+
+    el.btnShortlistToggle.classList.remove("primary");
+
+    // clear URL
+    history.replaceState(null, "", location.pathname);
+
+    applyFilters();
+    toast("Reset complete");
+  };
+
+  // quick toggles
+  document.querySelectorAll('[data-toggle]').forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const key = btn.getAttribute("data-toggle");
+      if(!key) return;
+
+      state.toggles[key] = !state.toggles[key];
+      btn.classList.toggle("active", state.toggles[key]);
+
+      // label for showCommitted
+      if(key === "showCommitted"){
+        // active means include committed
+      }
+      state.page = 1;
+      applyFilters();
+    });
+  });
+
+  // sort/per page
+  el.sortBy.onchange = ()=>{ state.page = 1; applyFilters(); };
+  el.perPage.onchange = ()=>{ state.page = 1; applyFilters(); };
+
+  // pagination
+  el.btnPrev.onclick = ()=>{ state.page = Math.max(1, state.page-1); applyFilters(); };
+  el.btnNext.onclick = ()=>{ state.page = state.page+1; applyFilters(); };
+
+  // random
+  el.btnRandom.onclick = ()=>{
+    const filters = readFiltersFromUI();
+    // build current filtered list quickly by reusing apply logic but without render
+    // easiest: call applyFilters then choose from currently rendered? we'll compute fresh:
+    let list = PLAYERS.slice();
+
+    if(state.shortlistOnly){
+      const ids = getShortlist();
+      list = list.filter(p=>ids.includes(p.id));
+    }
+    if(state.toggles.hasFilm) list = list.filter(hasFilm);
+    if(state.toggles.hasContact) list = list.filter(hasContact);
+    if(!state.toggles.showCommitted) list = list.filter(p=>String(p.availability)!=="Committed");
+    if(filters.q) list = list.filter(p=>matchesText(p, filters.q));
+    if(filters.classYear !== "all"){
+      const y = toInt(filters.classYear);
+      list = list.filter(p=>p.classYear===y);
+    }
+    if(filters.position !== "all"){
+      list = list.filter(p=>normalizePositions(p).set.has(filters.position));
+    }
+    if(filters.state !== "all"){
+      list = list.filter(p=>String(p.state).toUpperCase()===String(filters.state).toUpperCase());
+    }
+    if(filters.region !== "all"){
+      list = list.filter(p=>String(p.region)===String(filters.region));
+    }
+    if(filters.heightMin != null) list = list.filter(p=>(toInt(p.heightIn)||0)>=filters.heightMin);
+    if(filters.heightMax != null) list = list.filter(p=>(toInt(p.heightIn)||999)<=filters.heightMax);
+    if(filters.weightMin != null) list = list.filter(p=>(toInt(p.weightLb)||0)>=filters.weightMin);
+    if(filters.weightMax != null) list = list.filter(p=>(toInt(p.weightLb)||999)<=filters.weightMax);
+    if(filters.gpaMin != null) list = list.filter(p=>(toFloat(p.gpa)||0)>=filters.gpaMin);
+    if(filters.satMin != null) list = list.filter(p=>(toInt(p.sat)||0)>=filters.satMin);
+    if(filters.offerLevel !== "all") list = list.filter(p=>String(p.targetLevel)===String(filters.offerLevel));
+    if(filters.handedness !== "all") list = list.filter(p=>String(p.handedness)===String(filters.handedness));
+    if(filters.availability !== "all") list = list.filter(p=>String(p.availability)===String(filters.availability));
+    if(filters.tagsAny.length) list = list.filter(p=>hasAnyTag(p, filters.tagsAny));
+
+    if(!list.length){ toast("No players match current filters."); return; }
+    const pick = list[Math.floor(Math.random()*list.length)];
+    openModal(pick.id);
+  };
+
+  // shortlist view
+  el.btnShortlistToggle.onclick = ()=>{
+    state.shortlistOnly = !state.shortlistOnly;
+    el.btnShortlistToggle.classList.toggle("primary", state.shortlistOnly);
+    state.page = 1;
+    applyFilters();
+    toast(state.shortlistOnly ? "Shortlist view ON" : "Shortlist view OFF");
+  };
+
+  // share
+  el.btnShare.onclick = ()=>{
+    const filters = readFiltersFromUI();
+    const url = buildShareUrl(filters);
+    copyText(url);
+    toast("Share link copied");
+  };
+
+  // import/export/help
+  el.btnExport.onclick = doExport;
+  el.btnImport.onclick = doImport;
+  el.btnHelp.onclick = doHelp;
+
+  // modal events
+  el.modalClose.onclick = closeModal;
+  el.modalBackdrop.addEventListener("click", (e)=>{
+    if(e.target === el.modalBackdrop) closeModal();
+  });
+  window.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape"){
+      if(el.modalBackdrop.style.display === "flex") closeModal();
+      if(el.pasteBackdrop.style.display === "flex") el.pasteBackdrop.style.display = "none";
+    }
+    // Quick apply: Ctrl/Cmd + Enter
+    if((e.ctrlKey || e.metaKey) && e.key === "Enter"){
+      state.page = 1;
+      applyFilters();
+      toast("Filters applied");
+    }
+  });
+
+  el.modalShortlist.onclick = ()=>{
+    const id = state.currentModalId;
+    if(!id) return;
+    const nowStar = toggleShortlist(id);
+    el.modalShortlist.textContent = nowStar ? "★ Remove from Shortlist" : "⭐ Add to Shortlist";
+    applyFilters();
+  };
+
+  el.modalCopy.onclick = ()=>{
+    const id = state.currentModalId;
+    const p = PLAYERS.find(x=>x.id===id);
+    if(!p) return;
+    copyText(buildPlayerSummary(p));
+  };
+
+  // paste modal close
+  el.pasteClose.onclick = ()=> el.pasteBackdrop.style.display = "none";
+  el.pasteCancel.onclick = ()=> el.pasteBackdrop.style.display = "none";
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+function init(){
+  populateSelects();
+  wireEvents();
+
+  // apply URL params if present
+  applyFromQueryParams();
+
+  // First render
+  applyFilters();
+
+  // Update chips
+  updateHeaderChips(PLAYERS.length);
+}
+
+init();
+</script>
 </body>
 </html>
